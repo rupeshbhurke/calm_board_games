@@ -1,14 +1,6 @@
 import '../../../engine/rng.dart';
 
-enum JigsawDifficulty {
-  easy(3),
-  medium(4),
-  hard(6),
-  expert(8);
-
-  final int gridSize;
-  const JigsawDifficulty(this.gridSize);
-}
+const int defaultJigsawGrid = 3;
 
 class JigsawPiece {
   final int id;
@@ -45,14 +37,14 @@ class JigsawPiece {
 
 class JigsawState {
   final List<JigsawPiece> pieces;
-  final JigsawDifficulty difficulty;
+  final int gridSize;
   final double boardSize;
   final int movesCount;
   final bool isSolved;
 
   const JigsawState._({
     required this.pieces,
-    required this.difficulty,
+    required this.gridSize,
     required this.boardSize,
     required this.movesCount,
     required this.isSolved,
@@ -60,10 +52,9 @@ class JigsawState {
 
   factory JigsawState.initial(
     Rng rng, {
-    JigsawDifficulty difficulty = JigsawDifficulty.easy,
+    int gridSize = defaultJigsawGrid,
     double boardSize = 300,
   }) {
-    final gridSize = difficulty.gridSize;
     final pieceSize = boardSize / gridSize;
     final pieces = <JigsawPiece>[];
 
@@ -97,14 +88,14 @@ class JigsawState {
 
     return JigsawState._(
       pieces: List.unmodifiable(shuffled),
-      difficulty: difficulty,
+      gridSize: gridSize,
       boardSize: boardSize,
       movesCount: 0,
       isSolved: false,
     );
   }
 
-  double get pieceSize => boardSize / difficulty.gridSize;
+  double get pieceSize => boardSize / gridSize;
 
   int get placedCount => pieces.where((p) => p.isPlaced).length;
 
@@ -124,10 +115,14 @@ class JigsawLogic {
   JigsawLogic({Rng? rng}) : rng = rng ?? RandomRng();
 
   JigsawState newGame({
-    JigsawDifficulty difficulty = JigsawDifficulty.easy,
+    int gridSize = defaultJigsawGrid,
     double boardSize = 300,
   }) {
-    return JigsawState.initial(rng, difficulty: difficulty, boardSize: boardSize);
+    return JigsawState.initial(
+      rng,
+      gridSize: gridSize,
+      boardSize: boardSize,
+    );
   }
 
   JigsawMoveResult movePiece(JigsawState state, int pieceId, double x, double y) {
@@ -147,7 +142,7 @@ class JigsawLogic {
     return JigsawMoveResult(
       state: JigsawState._(
         pieces: List.unmodifiable(pieces),
-        difficulty: state.difficulty,
+        gridSize: state.gridSize,
         boardSize: state.boardSize,
         movesCount: state.movesCount,
         isSolved: state.isSolved,
@@ -192,7 +187,7 @@ class JigsawLogic {
     return JigsawMoveResult(
       state: JigsawState._(
         pieces: List.unmodifiable(pieces),
-        difficulty: state.difficulty,
+        gridSize: state.gridSize,
         boardSize: state.boardSize,
         movesCount: state.movesCount + 1,
         isSolved: isSolved,

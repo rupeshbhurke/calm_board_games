@@ -1,4 +1,4 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 
 import '../registry/game_module.dart';
 import 'game_2048_screen.dart';
@@ -12,6 +12,7 @@ class Game2048Module implements GameModule {
         title: '2048',
         tagline: 'Slide tiles to reach 2048.',
         category: GameCategory.puzzle,
+        icon: Icons.numbers,
       );
 
   @override

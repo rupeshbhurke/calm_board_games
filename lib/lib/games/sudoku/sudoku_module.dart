@@ -1,4 +1,4 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 
 import '../registry/game_module.dart';
 import 'sudoku_screen.dart';
@@ -12,6 +12,7 @@ class SudokuModule implements GameModule {
         title: 'Sudoku',
         tagline: 'Fill the grid with numbers.',
         category: GameCategory.logic,
+        icon: Icons.grid_3x3,
       );
 
   @override

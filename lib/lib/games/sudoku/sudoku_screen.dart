@@ -307,32 +307,59 @@ class _SudokuCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Color bgColor;
+    final bool hasValue = !cell.isEmpty;
+    final bool isPlayerEntry = hasValue && !cell.isGiven;
+    final bool isError = cell.hasError;
+
+    Color bgColor = CalmPalette.surface;
+    Color borderColor = CalmPalette.stroke;
+
+    if (isHighlighted) {
+      bgColor = CalmPalette.secondary.withValues(alpha: 0.18);
+    }
+
     if (isSelected) {
-      bgColor = CalmPalette.primary;
-    } else if (isHighlighted) {
-      bgColor = CalmPalette.secondary.withValues(alpha: 0.3);
+      bgColor = CalmPalette.primary.withValues(alpha: 0.35);
+      borderColor = CalmPalette.primary;
+    }
+
+    if (isError) {
+      bgColor = Colors.red.withValues(alpha: 0.25);
+      borderColor = Colors.red;
+    }
+
+    Color textColor;
+    if (!hasValue) {
+      textColor = CalmPalette.text;
+    } else if (isError) {
+      textColor = Colors.red.shade900;
+    } else if (cell.isGiven) {
+      textColor = CalmPalette.text;
     } else {
-      bgColor = CalmPalette.surface;
+      textColor = CalmPalette.primary;
     }
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        color: bgColor,
+        decoration: BoxDecoration(
+          color: bgColor,
+          border: Border.all(
+            color: borderColor,
+            width: isSelected ? 2 : 1,
+          ),
+          borderRadius: BorderRadius.circular(Spacing.r12 / 3),
+        ),
         child: Center(
-          child: cell.isEmpty
+          child: !hasValue
               ? null
               : Text(
                   '${cell.value}',
                   style: TextStyle(
                     fontSize: 20,
-                    fontWeight: cell.isGiven ? FontWeight.bold : FontWeight.normal,
-                    color: cell.hasError
-                        ? Colors.red
-                        : cell.isGiven
-                            ? CalmPalette.text
-                            : CalmPalette.primary,
+                    fontWeight:
+                        cell.isGiven ? FontWeight.w700 : (isPlayerEntry ? FontWeight.w600 : FontWeight.normal),
+                    color: textColor,
                   ),
                 ),
         ),

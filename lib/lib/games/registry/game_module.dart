@@ -1,4 +1,4 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 
 enum GameCategory { puzzle, logic, strategy, casual }
 
@@ -7,12 +7,14 @@ class GameMetadata {
   final String title;
   final String tagline;
   final GameCategory category;
+  final IconData icon;
 
   const GameMetadata({
     required this.id,
     required this.title,
     required this.tagline,
     required this.category,
+    required this.icon,
   });
 }
 

@@ -1,4 +1,4 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 
 import '../registry/game_module.dart';
 import 'ui/sliding_puzzle_screen.dart';
@@ -12,6 +12,7 @@ class SlidingPuzzleModule implements GameModule {
         title: 'Sliding Puzzle',
         tagline: 'Slide tiles into place.',
         category: GameCategory.puzzle,
+        icon: Icons.view_quilt,
       );
 
   @override

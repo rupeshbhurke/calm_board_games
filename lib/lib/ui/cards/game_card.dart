@@ -17,6 +17,20 @@ class GameCard extends StatelessWidget {
         padding: const EdgeInsets.all(Spacing.s21),
         child: Row(
           children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(Spacing.r16),
+              ),
+              child: Icon(
+                meta.icon,
+                size: 32,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
+            const SizedBox(width: Spacing.s13),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -27,7 +41,6 @@ class GameCard extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(width: Spacing.s13),
             FilledButton(
               onPressed: () {
                 Navigator.of(context).push(

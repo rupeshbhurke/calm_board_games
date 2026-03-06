@@ -29,24 +29,30 @@ class _FakeRng implements Rng {
 void main() {
   group('JigsawLogic', () {
     test('new game creates correct number of pieces', () {
-      final logic = JigsawLogic(rng: _FakeRng(ints: List.filled(100, 0), doubles: List.filled(100, 0.5)));
-      final state = logic.newGame(difficulty: JigsawDifficulty.easy);
+      final logic = JigsawLogic(
+        rng: _FakeRng(ints: List.filled(100, 0), doubles: List.filled(100, 0.5)),
+      );
+      final state = logic.newGame(gridSize: 3);
 
       expect(state.pieces.length, 9); // 3x3
-      expect(state.difficulty, JigsawDifficulty.easy);
+      expect(state.gridSize, 3);
       expect(state.isSolved, isFalse);
     });
 
-    test('medium difficulty creates 16 pieces', () {
-      final logic = JigsawLogic(rng: _FakeRng(ints: List.filled(100, 0), doubles: List.filled(100, 0.5)));
-      final state = logic.newGame(difficulty: JigsawDifficulty.medium);
+    test('custom grid size creates expected piece count', () {
+      final logic = JigsawLogic(
+        rng: _FakeRng(ints: List.filled(100, 0), doubles: List.filled(100, 0.5)),
+      );
+      final state = logic.newGame(gridSize: 4);
 
       expect(state.pieces.length, 16); // 4x4
     });
 
     test('movePiece updates position', () {
-      final logic = JigsawLogic(rng: _FakeRng(ints: List.filled(100, 0), doubles: List.filled(100, 0.5)));
-      var state = logic.newGame(difficulty: JigsawDifficulty.easy);
+      final logic = JigsawLogic(
+        rng: _FakeRng(ints: List.filled(100, 0), doubles: List.filled(100, 0.5)),
+      );
+      var state = logic.newGame(gridSize: 3);
 
       final pieceId = state.pieces.first.id;
       final result = logic.movePiece(state, pieceId, 100, 200);
@@ -56,8 +62,10 @@ void main() {
     });
 
     test('dropPiece snaps when near correct position', () {
-      final logic = JigsawLogic(rng: _FakeRng(ints: List.filled(100, 0), doubles: List.filled(100, 0.5)));
-      var state = logic.newGame(difficulty: JigsawDifficulty.easy, boardSize: 300);
+      final logic = JigsawLogic(
+        rng: _FakeRng(ints: List.filled(100, 0), doubles: List.filled(100, 0.5)),
+      );
+      var state = logic.newGame(gridSize: 3, boardSize: 300);
 
       // Find piece that belongs at (0,0)
       final piece = state.pieces.firstWhere((p) => p.correctRow == 0 && p.correctCol == 0);
@@ -71,7 +79,7 @@ void main() {
 
     test('dropPiece does not snap when far from correct position', () {
       final logic = JigsawLogic(rng: _FakeRng(ints: List.filled(100, 0), doubles: List.filled(100, 0.5)));
-      var state = logic.newGame(difficulty: JigsawDifficulty.easy, boardSize: 300);
+      var state = logic.newGame(gridSize: 3, boardSize: 300);
 
       final piece = state.pieces.firstWhere((p) => p.correctRow == 0 && p.correctCol == 0);
       
@@ -83,8 +91,10 @@ void main() {
     });
 
     test('cannot move already placed piece', () {
-      final logic = JigsawLogic(rng: _FakeRng(ints: List.filled(100, 0), doubles: List.filled(100, 0.5)));
-      var state = logic.newGame(difficulty: JigsawDifficulty.easy, boardSize: 300);
+      final logic = JigsawLogic(
+        rng: _FakeRng(ints: List.filled(100, 0), doubles: List.filled(100, 0.5)),
+      );
+      var state = logic.newGame(gridSize: 3, boardSize: 300);
 
       final piece = state.pieces.firstWhere((p) => p.correctRow == 0 && p.correctCol == 0);
       
@@ -98,8 +108,10 @@ void main() {
     });
 
     test('puzzle is solved when all pieces placed', () {
-      final logic = JigsawLogic(rng: _FakeRng(ints: List.filled(100, 0), doubles: List.filled(100, 0.5)));
-      var state = logic.newGame(difficulty: JigsawDifficulty.easy, boardSize: 300);
+      final logic = JigsawLogic(
+        rng: _FakeRng(ints: List.filled(100, 0), doubles: List.filled(100, 0.5)),
+      );
+      var state = logic.newGame(gridSize: 3, boardSize: 300);
 
       // Place all pieces
       for (final piece in state.pieces) {
@@ -112,8 +124,10 @@ void main() {
     });
 
     test('placedCount tracks placed pieces', () {
-      final logic = JigsawLogic(rng: _FakeRng(ints: List.filled(100, 0), doubles: List.filled(100, 0.5)));
-      var state = logic.newGame(difficulty: JigsawDifficulty.easy, boardSize: 300);
+      final logic = JigsawLogic(
+        rng: _FakeRng(ints: List.filled(100, 0), doubles: List.filled(100, 0.5)),
+      );
+      var state = logic.newGame(gridSize: 3, boardSize: 300);
 
       expect(state.placedCount, 0);
 

@@ -82,13 +82,16 @@ class _BlockPuzzleScreenState extends State<BlockPuzzleScreen> {
                 onButtonPressed: _resetGame,
               ),
               const SizedBox(height: Spacing.s21),
+              _SelectedShapePanel(
+                selectedShape: _selectedShapeIndex != null
+                    ? _state.availableShapes[_selectedShapeIndex!]
+                    : null,
+              ),
+              const SizedBox(height: Spacing.s21),
               Expanded(
                 child: Center(
                   child: _GameBoard(
                     state: _state,
-                    selectedShape: _selectedShapeIndex != null
-                        ? _state.availableShapes[_selectedShapeIndex!]
-                        : null,
                     onCellTap: _onBoardTap,
                   ),
                 ),
@@ -107,14 +110,81 @@ class _BlockPuzzleScreenState extends State<BlockPuzzleScreen> {
   }
 }
 
+class _SelectedShapePanel extends StatelessWidget {
+  final BlockShape? selectedShape;
+
+  const _SelectedShapePanel({required this.selectedShape});
+
+  @override
+  Widget build(BuildContext context) {
+    final hasSelection = selectedShape != null;
+    final title = hasSelection
+        ? 'Tap a cell on the board to place this shape'
+        : 'Select a shape to start your move';
+    final subtitle = hasSelection
+        ? 'Fill an entire row or column to clear it and earn bonus points.'
+        : 'Each placement scores the number of tiles you cover.';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(Spacing.s13),
+      decoration: BoxDecoration(
+        color: CalmPalette.surface,
+        borderRadius: BorderRadius.circular(Spacing.r16),
+        border: Border.all(color: CalmPalette.stroke),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: Spacing.s8),
+                Text(
+                  subtitle,
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyMedium
+                      ?.copyWith(color: CalmPalette.subtext),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: Spacing.s13),
+          if (hasSelection)
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: CalmPalette.bg,
+                borderRadius: BorderRadius.circular(Spacing.r16),
+                border: Border.all(color: CalmPalette.stroke),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(Spacing.s8),
+                child: _ShapePreview(shape: selectedShape!),
+              ),
+            )
+          else
+            Icon(
+              Icons.touch_app,
+              color: CalmPalette.subtext,
+              size: 28,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class _GameBoard extends StatelessWidget {
   final BlockBoardState state;
-  final BlockShape? selectedShape;
   final void Function(int row, int col) onCellTap;
 
   const _GameBoard({
     required this.state,
-    required this.selectedShape,
     required this.onCellTap,
   });
 
@@ -199,32 +269,51 @@ class _ShapeSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 100,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: List.generate(shapes.length, (index) {
-          final shape = shapes[index];
-          final isSelected = selectedIndex == index;
-          return GestureDetector(
-            onTap: shape != null ? () => onSelect(index) : null,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: Spacing.ms180),
-              width: 90,
-              height: 90,
-              decoration: BoxDecoration(
-                color: isSelected ? CalmPalette.primary : CalmPalette.surface,
-                borderRadius: BorderRadius.circular(Spacing.r16),
-                border: Border.all(
-                  color: isSelected ? CalmPalette.text : CalmPalette.stroke,
-                  width: isSelected ? 2 : 1,
+      height: 120,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: Spacing.s8),
+        child: Row(
+          children: List.generate(shapes.length, (index) {
+            final shape = shapes[index];
+            final isSelected = selectedIndex == index;
+            return Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: Spacing.s8 / 2,
+              ),
+              child: GestureDetector(
+                onTap: shape != null ? () => onSelect(index) : null,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: Spacing.ms180),
+                  width: 96,
+                  height: 96,
+                  decoration: BoxDecoration(
+                    color:
+                        isSelected ? CalmPalette.primary : CalmPalette.surface,
+                    borderRadius: BorderRadius.circular(Spacing.r16),
+                    border: Border.all(
+                      color: isSelected ? CalmPalette.text : CalmPalette.stroke,
+                      width: isSelected ? 2 : 1,
+                    ),
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: CalmPalette.primary
+                                  .withValues(alpha: 0.25),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: shape != null
+                      ? Center(child: _ShapePreview(shape: shape))
+                      : null,
                 ),
               ),
-              child: shape != null
-                  ? Center(child: _ShapePreview(shape: shape))
-                  : null,
-            ),
-          );
-        }),
+            );
+          }),
+        ),
       ),
     );
   }
@@ -250,7 +339,7 @@ class _ShapePreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cellSize = 12.0;
+    final cellSize = 16.0;
     final color = _colors[shape.colorIndex % _colors.length];
 
     return SizedBox(

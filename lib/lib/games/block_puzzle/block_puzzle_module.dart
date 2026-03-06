@@ -1,4 +1,4 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 
 import '../registry/game_module.dart';
 import 'block_puzzle_screen.dart';
@@ -12,6 +12,7 @@ class BlockPuzzleModule implements GameModule {
         title: 'Block Puzzle',
         tagline: 'Place blocks to clear lines.',
         category: GameCategory.puzzle,
+        icon: Icons.extension,
       );
 
   @override
