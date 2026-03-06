@@ -415,10 +415,43 @@ class _PuzzleArea extends StatelessWidget {
                 height: state.boardSize,
                 decoration: BoxDecoration(
                   color: CalmPalette.surface,
-                  borderRadius: BorderRadius.circular(Spacing.r16),
+                  borderRadius: BorderRadius.circular(Spacing.r12),
                   border: Border.all(color: CalmPalette.stroke, width: 2),
                 ),
-                child: _BoardGrid(gridSize: state.gridSize),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(Spacing.r12 - 2),
+                  child: Stack(
+                    children: [
+                      Positioned.fill(
+                        child: DecoratedBox(
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Color(0xFFFDFDFE),
+                                Color(0xFFF1F3F6),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (puzzleImage != null)
+                        Positioned.fill(
+                          child: Opacity(
+                            opacity: 0.25,
+                            child: RawImage(
+                              image: puzzleImage,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                      Positioned.fill(
+                        child: _BoardGrid(gridSize: state.gridSize),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
             // Pieces
@@ -512,7 +545,7 @@ class _DraggablePieceState extends State<_DraggablePiece> {
     );
     final hasImage = widget.puzzleImage != null;
     final baseColor = Color(colorData.colorValue);
-    final borderRadius = BorderRadius.circular(Spacing.r12);
+    const borderRadius = BorderRadius.zero;
 
     final displayX = _dragOffset?.dx ?? (piece.currentX + widget.offsetX);
     final displayY = _dragOffset?.dy ?? piece.currentY;
@@ -570,12 +603,16 @@ class _DraggablePieceState extends State<_DraggablePiece> {
                       offset: const Offset(0, 4),
                     ),
                   ]
-                : null,
+                : [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 2,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
           ),
           child: ClipRRect(
-            borderRadius: borderRadius.subtract(
-              const BorderRadius.all(Radius.circular(1)),
-            ),
+            borderRadius: borderRadius,
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -590,25 +627,6 @@ class _DraggablePieceState extends State<_DraggablePiece> {
                   )
                 else
                   ColoredBox(color: baseColor),
-                Align(
-                  alignment: Alignment.topRight,
-                  child: Container(
-                    margin: const EdgeInsets.all(4),
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: hasImage ? 0.35 : 0.05),
-                      borderRadius: BorderRadius.circular(Spacing.r12),
-                    ),
-                    child: Text(
-                      '${piece.id + 1}',
-                      style: TextStyle(
-                        color: hasImage ? Colors.white : CalmPalette.subtext,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
               ],
             ),
           ),

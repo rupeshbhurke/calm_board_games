@@ -18,6 +18,7 @@ class _BlockPuzzleScreenState extends State<BlockPuzzleScreen> {
   late BlockBoardState _state;
   int? _selectedShapeIndex;
   bool _gameOverShown = false;
+  bool _boardPulse = false;
 
   @override
   void initState() {
@@ -26,11 +27,21 @@ class _BlockPuzzleScreenState extends State<BlockPuzzleScreen> {
     _resetGame();
   }
 
+  void _triggerBoardPulse() {
+    if (_boardPulse) return;
+    setState(() => _boardPulse = true);
+    Future.delayed(const Duration(milliseconds: Spacing.ms220), () {
+      if (!mounted) return;
+      setState(() => _boardPulse = false);
+    });
+  }
+
   void _resetGame() {
     setState(() {
       _state = _logic.newGame();
       _selectedShapeIndex = null;
       _gameOverShown = false;
+      _boardPulse = false;
     });
   }
 
@@ -51,6 +62,10 @@ class _BlockPuzzleScreenState extends State<BlockPuzzleScreen> {
       _state = result.state;
       _selectedShapeIndex = null;
     });
+
+    if (result.linesCleared > 0) {
+      _triggerBoardPulse();
+    }
 
     if (_state.gameOver && !_gameOverShown) {
       _gameOverShown = true;
@@ -92,6 +107,7 @@ class _BlockPuzzleScreenState extends State<BlockPuzzleScreen> {
                 child: Center(
                   child: _GameBoard(
                     state: _state,
+                    pulse: _boardPulse,
                     onCellTap: _onBoardTap,
                   ),
                 ),
@@ -181,10 +197,12 @@ class _SelectedShapePanel extends StatelessWidget {
 
 class _GameBoard extends StatelessWidget {
   final BlockBoardState state;
+  final bool pulse;
   final void Function(int row, int col) onCellTap;
 
   const _GameBoard({
     required this.state,
+    required this.pulse,
     required this.onCellTap,
   });
 
@@ -192,11 +210,26 @@ class _GameBoard extends StatelessWidget {
   Widget build(BuildContext context) {
     return AspectRatio(
       aspectRatio: 1,
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: Spacing.ms220),
         padding: const EdgeInsets.all(Spacing.s8),
         decoration: BoxDecoration(
           color: CalmPalette.surface,
           borderRadius: BorderRadius.circular(Spacing.r24),
+          boxShadow: pulse
+              ? [
+                  BoxShadow(
+                    color: CalmPalette.primary.withValues(alpha: 0.25),
+                    blurRadius: 24,
+                    spreadRadius: 2,
+                  ),
+                ]
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 12,
+                  ),
+                ],
         ),
         child: GridView.builder(
           physics: const NeverScrollableScrollPhysics(),
@@ -228,28 +261,41 @@ class _BoardCell extends StatelessWidget {
 
   static const _colors = [
     CalmPalette.bg,
-    CalmPalette.primary,
-    CalmPalette.secondary,
-    CalmPalette.accent,
-    Color(0xFFB8B8D1),
-    Color(0xFFF4C7AB),
-    Color(0xFFD4A5A5),
-    Color(0xFFA5C4D4),
-    Color(0xFFC4D4A5),
-    Color(0xFFD4C4A5),
-    Color(0xFFA5D4C4),
+    Color(0xFF5B8DEE),
+    Color(0xFF59C3C3),
+    Color(0xFFF6B756),
+    Color(0xFFEA7070),
+    Color(0xFF9C6ADE),
+    Color(0xFF5AC8FA),
+    Color(0xFF72E0A8),
+    Color(0xFFF78FB3),
+    Color(0xFFFFD166),
+    Color(0xFF7BC2FF),
   ];
 
   @override
   Widget build(BuildContext context) {
+    final isFilled = colorIndex != 0;
+    final fillColor = _colors[colorIndex % _colors.length];
     return Container(
       decoration: BoxDecoration(
-        color: _colors[colorIndex % _colors.length],
-        borderRadius: BorderRadius.circular(4),
+        color: fillColor,
+        borderRadius: BorderRadius.circular(isFilled ? 6 : 4),
         border: Border.all(
-          color: colorIndex == 0 ? CalmPalette.stroke : Colors.transparent,
-          width: 0.5,
+          color: isFilled
+              ? Colors.white.withValues(alpha: 0.12)
+              : CalmPalette.stroke,
+          width: isFilled ? 0.6 : 0.8,
         ),
+        boxShadow: isFilled
+            ? [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
+                ),
+              ]
+            : null,
       ),
     );
   }
@@ -289,11 +335,13 @@ class _ShapeSelector extends StatelessWidget {
                   height: 96,
                   decoration: BoxDecoration(
                     color:
-                        isSelected ? CalmPalette.primary : CalmPalette.surface,
-                    borderRadius: BorderRadius.circular(Spacing.r16),
+                        isSelected ? CalmPalette.primary : const Color(0xFF1F2331),
+                    borderRadius: BorderRadius.circular(Spacing.r24),
                     border: Border.all(
-                      color: isSelected ? CalmPalette.text : CalmPalette.stroke,
-                      width: isSelected ? 2 : 1,
+                      color: isSelected
+                          ? Colors.white.withValues(alpha: 0.8)
+                          : Colors.white.withValues(alpha: 0.08),
+                      width: 1.2,
                     ),
                     boxShadow: isSelected
                         ? [
@@ -342,27 +390,48 @@ class _ShapePreview extends StatelessWidget {
     final cellSize = 16.0;
     final color = _colors[shape.colorIndex % _colors.length];
 
-    return SizedBox(
-      width: shape.cols * cellSize,
-      height: shape.rows * cellSize,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: List.generate(shape.rows, (r) {
-          return Row(
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(Spacing.r12),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(Spacing.s8 / 2),
+        child: SizedBox(
+          width: shape.cols * cellSize,
+          height: shape.rows * cellSize,
+          child: Column(
             mainAxisSize: MainAxisSize.min,
-            children: List.generate(shape.cols, (c) {
-              return Container(
-                width: cellSize,
-                height: cellSize,
-                margin: const EdgeInsets.all(0.5),
-                decoration: BoxDecoration(
-                  color: shape.pattern[r][c] ? color : Colors.transparent,
-                  borderRadius: BorderRadius.circular(2),
-                ),
+            children: List.generate(shape.rows, (r) {
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: List.generate(shape.cols, (c) {
+                  final isFilled = shape.pattern[r][c];
+                  return AnimatedScale(
+                    duration: const Duration(milliseconds: Spacing.ms180),
+                    scale: isFilled ? 1 : 0.9,
+                    child: Container(
+                      width: cellSize,
+                      height: cellSize,
+                      margin: const EdgeInsets.all(0.5),
+                      decoration: BoxDecoration(
+                        color: isFilled ? color : Colors.transparent,
+                        borderRadius: BorderRadius.circular(3),
+                        border: isFilled
+                            ? Border.all(
+                                color: Colors.white.withValues(alpha: 0.35),
+                                width: 0.6,
+                              )
+                            : null,
+                      ),
+                    ),
+                  );
+                }),
               );
             }),
-          );
-        }),
+          ),
+        ),
       ),
     );
   }

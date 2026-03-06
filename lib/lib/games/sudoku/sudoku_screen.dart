@@ -21,6 +21,8 @@ class _SudokuScreenState extends State<SudokuScreen> {
   int _selectedCol = -1;
   int _difficulty = 1;
   bool _solvedShown = false;
+  int _lastNumber = 0;
+  int _hintsUsed = 0;
 
   @override
   void initState() {
@@ -36,6 +38,8 @@ class _SudokuScreenState extends State<SudokuScreen> {
       _selectedRow = -1;
       _selectedCol = -1;
       _solvedShown = false;
+      _lastNumber = 0;
+      _hintsUsed = 0;
     });
   }
 
@@ -55,6 +59,7 @@ class _SudokuScreenState extends State<SudokuScreen> {
 
     setState(() {
       _state = result.state;
+      _lastNumber = number;
     });
 
     if (_state.isSolved && !_solvedShown) {
@@ -85,6 +90,8 @@ class _SudokuScreenState extends State<SudokuScreen> {
     setState(() {
       _selectedRow = row;
       _selectedCol = col;
+      _lastNumber = value;
+      _hintsUsed++;
     });
 
     showInfoDialog(
@@ -108,6 +115,12 @@ class _SudokuScreenState extends State<SudokuScreen> {
       2 => 'Medium',
       _ => 'Hard',
     };
+
+    final errorCount = _state.board
+        .expand((row) => row)
+        .where((cell) => cell.hasError)
+        .length;
+    final remaining = _state.totalCells - _state.filledCount;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Sudoku')),
@@ -157,9 +170,16 @@ class _SudokuScreenState extends State<SudokuScreen> {
                 ),
               ),
               const SizedBox(height: Spacing.s21),
+              _StatusBar(
+                errors: errorCount,
+                hintsUsed: _hintsUsed,
+                remaining: remaining,
+              ),
+              const SizedBox(height: Spacing.s13),
               _NumberPad(
                 onNumber: _setNumber,
                 onClear: () => _setNumber(0),
+                activeNumber: _lastNumber > 0 ? _lastNumber : null,
               ),
               const SizedBox(height: Spacing.s13),
               Row(
@@ -371,44 +391,163 @@ class _SudokuCell extends StatelessWidget {
 class _NumberPad extends StatelessWidget {
   final ValueChanged<int> onNumber;
   final VoidCallback onClear;
+  final int? activeNumber;
 
-  const _NumberPad({required this.onNumber, required this.onClear});
+  const _NumberPad({
+    required this.onNumber,
+    required this.onClear,
+    required this.activeNumber,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: Spacing.s8,
+      runSpacing: Spacing.s8,
+      alignment: WrapAlignment.center,
+      children: [
+        for (var number = 1; number <= 9; number++)
+          _NumberKey(
+            label: '$number',
+            selected: activeNumber == number,
+            onTap: () => onNumber(number),
+          ),
+        _NumberKey(
+          icon: Icons.backspace_outlined,
+          label: 'Clear',
+          selected: false,
+          onTap: onClear,
+          isUtility: true,
+        ),
+      ],
+    );
+  }
+}
+
+class _NumberKey extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  final IconData? icon;
+  final bool isUtility;
+
+  const _NumberKey({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    this.icon,
+    this.isUtility = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final bgColor = selected
+        ? CalmPalette.primary
+        : isUtility
+            ? CalmPalette.surface
+            : CalmPalette.bg;
+    final fgColor = selected ? CalmPalette.text : theme.colorScheme.onSurface;
+
+    return SizedBox(
+      width: 56,
+      height: 48,
+      child: Material(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(Spacing.r16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(Spacing.r16),
+          onTap: onTap,
+          child: Center(
+            child: icon != null
+                ? Icon(icon, color: fgColor)
+                : Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: fgColor,
+                    ),
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _StatusBar extends StatelessWidget {
+  final int errors;
+  final int hintsUsed;
+  final int remaining;
+
+  const _StatusBar({
+    required this.errors,
+    required this.hintsUsed,
+    required this.remaining,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        ...List.generate(9, (index) {
-          final number = index + 1;
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: SizedBox(
-              width: 32,
-              height: 40,
-              child: FilledButton(
-                style: FilledButton.styleFrom(
-                  padding: EdgeInsets.zero,
-                ),
-                onPressed: () => onNumber(number),
-                child: Text('$number'),
-              ),
-            ),
-          );
-        }),
-        const SizedBox(width: 8),
-        SizedBox(
-          width: 40,
-          height: 40,
-          child: TextButton(
-            style: TextButton.styleFrom(
-              padding: EdgeInsets.zero,
-            ),
-            onPressed: onClear,
-            child: const Icon(Icons.backspace_outlined, size: 20),
-          ),
-        ),
+        _StatusChip(label: 'Errors', value: '$errors', icon: Icons.error_outline),
+        _StatusChip(label: 'Hints', value: '$hintsUsed', icon: Icons.lightbulb_outline),
+        _StatusChip(label: 'Empty', value: '$remaining', icon: Icons.blur_on),
       ],
+    );
+  }
+}
+
+class _StatusChip extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+
+  const _StatusChip({
+    required this.label,
+    required this.value,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.s13,
+        vertical: Spacing.s8,
+      ),
+      decoration: BoxDecoration(
+        color: CalmPalette.surface,
+        borderRadius: BorderRadius.circular(Spacing.r16),
+        border: Border.all(color: CalmPalette.stroke),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 18, color: theme.colorScheme.primary),
+          const SizedBox(width: Spacing.s8 / 2),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: CalmPalette.subtext,
+                ),
+              ),
+              Text(
+                value,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
